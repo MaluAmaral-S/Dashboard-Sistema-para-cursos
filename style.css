@@ -106,9 +106,9 @@ body {
 }
 
 /* Estiliza a imagem do logotipo */
-#sidebar .brand .logo img {
-    width: 40px;
-    height: 40px;
+#sidebar .brand .logo i {
+    width: 20px;
+    height: 5px;
     border-radius: 6px; /* Bordas arredondadas */
     object-fit: contain; /* Mantém proporções da imagem */
     margin-right: 10px; /* Espaço à direita */

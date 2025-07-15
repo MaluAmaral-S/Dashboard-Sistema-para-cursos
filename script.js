@@ -141,6 +141,63 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Função para mostrar a aba correta e atualizar o menu
+function showTab(tabId) {
+    // 1. Esconde todos os conteúdos de abas
+    const allTabContents = document.querySelectorAll('.tab-content');
+    allTabContents.forEach(content => {
+        content.classList.remove('active');
+    });
+
+    // 2. Remove a classe 'active' de todos os itens do menu
+    const allMenuItems = document.querySelectorAll('#sidebar .side-menu.top li');
+    allMenuItems.forEach(item => {
+        item.classList.remove('active');
+    });
+
+    // 3. Mostra o conteúdo da aba selecionada
+    const selectedTabContent = document.getElementById(tabId + '-tab');
+    if (selectedTabContent) {
+        selectedTabContent.classList.add('active');
+    }
+
+    // 4. Adiciona a classe 'active' ao item de menu clicado
+    // Usa o atributo 'data-tab' que você já tem no HTML
+    const selectedMenuItem = document.querySelector(`#sidebar .side-menu.top li[data-tab="${tabId}"]`);
+    if (selectedMenuItem) {
+        selectedMenuItem.classList.add('active');
+    }
+}
+
+// Event Listeners para os cliques no menu
+document.addEventListener('DOMContentLoaded', () => {
+    const menuItems = document.querySelectorAll('#sidebar .side-menu.top li');
+
+    menuItems.forEach(item => {
+        item.addEventListener('click', (event) => {
+            // Previne o comportamento padrão do link, se houver
+            event.preventDefault(); 
+            
+            const tabId = item.getAttribute('data-tab');
+            if (tabId) {
+                // Remove o link para "pages/inscrição.html" e apenas troca a aba
+                // Isso unifica o comportamento de todos os botões do menu
+                window.history.pushState(null, '', '#' + tabId); // Opcional: muda a URL para refletir a aba
+                showTab(tabId);
+            }
+        });
+    });
+
+    // Opcional: Mostrar a aba correta se a página for carregada com um hash na URL
+    const initialTab = window.location.hash.substring(1);
+    if (initialTab) {
+        showTab(initialTab);
+    } else {
+        // Garante que a primeira aba ('painel') esteja ativa ao carregar
+        showTab('painel');
+    }
+});
+
 
 // Instancia as classes para ativar as funcionalidades
 const menuLateral = new MenuLateral();
