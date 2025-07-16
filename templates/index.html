@@ -4,16 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Boxicons para ícones -->
     <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
-    <!-- Estilos CSS personalizados -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <title>Dashboard</title>
 </head>
 <body>
-    <!-- BARRA LATERAL -->
-<section id="sidebar">
+    <section id="sidebar">
     <a href="#" class="brand">
         <div class="image-text">
             <span class="logo">
@@ -71,11 +68,7 @@
         </li>
     </ul>
 </section>
-    <!-- BARRA LATERAL -->
-
-    <!-- CONTEÚDO -->
     <section id="content">
-        <!-- BARRA DE NAVEGAÇÃO -->
         <nav>
             
             <i class='bx bx-menu'></i>
@@ -83,11 +76,7 @@
             <input type="checkbox" id="switch-mode" hidden>
             <label for="switch-mode" class="switch-mode"></label>
         </nav>
-        <!-- BARRA DE NAVEGAÇÃO -->
-
-        <!-- CONTEÚDO PRINCIPAL -->
         <main>
-            <!-- ABA PAINEL GERAL -->
             <div id="painel-tab" class="tab-content active">
                 <div class="head-title">
                     <div class="left">
@@ -100,7 +89,6 @@
                     </div>
                 </div>
                 
-                <!-- Estatísticas -->
                 <ul class="box-info">
                     <li>
                         <i class='bx bxs-group'></i>
@@ -125,7 +113,6 @@
                     </li>
                 </ul>
                 
-                <!-- Tabelas de dados -->
                 <div class="table-data">
                     <div class="order">
                         <div class="head">
@@ -140,8 +127,7 @@
                                 </tr>
                             </thead>
                             <tbody id="turmas-populares">
-                                <!-- Dados carregados via JavaScript -->
-                            </tbody>
+                                </tbody>
                         </table>
                     </div>
                     
@@ -157,14 +143,12 @@
                                 </tr>
                             </thead>
                             <tbody id="cursos-populares">
-                                <!-- Dados carregados via JavaScript -->
-                            </tbody>
+                                </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- ABA INSCRIÇÃO -->
             <div id="inscricao-tab" class="tab-content">
                 <div class="head-title">
                     <div class="left">
@@ -232,14 +216,21 @@
                             
                             <div class="form-group">
                                 <label for="curso_select">Curso *</label>
-                                <select id="curso_select" name="curso_id" required onchange="loadTurmas()">
+                                <select id="curso_select" name="curso_id" required onchange="loadCiclosForEnrollment()">
                                     <option value="">Selecione um curso</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ciclo_select_enrollment">Ciclo *</label>
+                                <select id="ciclo_select_enrollment" name="ciclo_id" required onchange="loadTurmasForEnrollment()">
+                                    <option value="">Selecione um ciclo</option>
                                 </select>
                             </div>
                             
                             <div class="form-group">
-                                <label for="turma_select">Turma *</label>
-                                <select id="turma_select" name="turma_id" required>
+                                <label for="turma_select_enrollment">Turma *</label>
+                                <select id="turma_select_enrollment" name="turma_id" required>
                                     <option value="">Selecione uma turma</option>
                                 </select>
                             </div>
@@ -253,7 +244,6 @@
                 </div>
             </div>
 
-            <!-- ABA ALUNOS -->
             <div id="alunos-tab" class="tab-content">
                 <div class="head-title">
                     <div class="left">
@@ -266,7 +256,6 @@
                     </div>
                 </div>
                 
-                <!-- Filtros -->
                 <div class="filters">
                     <div class="filter-group">
                         <label for="filtro-nome">Nome:</label>
@@ -287,7 +276,6 @@
                     <button onclick="filtrarAlunos()" class="btn-filter">Filtrar</button>
                 </div>
                 
-                <!-- Lista de alunos -->
                 <div class="table-data">
                     <div class="order full-width">
                         <div class="head">
@@ -306,14 +294,12 @@
                                 </tr>
                             </thead>
                             <tbody id="lista-alunos">
-                                <!-- Dados carregados via JavaScript -->
-                            </tbody>
+                                </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- ABA TURMAS -->
             <div id="turmas-tab" class="tab-content">
                 <div class="head-title">
                     <div class="left">
@@ -323,15 +309,32 @@
                             <li><i class='bx bx-chevron-right'></i></li>
                             <li><a class="active" href="#">Lista</a></li>
                         </ul>
+                        <ul class="box-cursos">
+                            <li>
+                                <button class="curso-btn styled-btn">
+                                    <span class="curso-icon ai-icon"><i class='bx bxs-brain'></i></span>
+                                    <span class="curso-text">Inteligência Artificial</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button class="curso-btn styled-btn">
+                                    <span class="curso-icon prog-icon"><i class='bx  bx-code'  ></i>  </span>
+                                    <span class="curso-text">Programação</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button class="curso-btn styled-btn">
+                                    <span class="curso-icon info-icon"><i class='bx  bx-laptop'  ></i> </span>
+                                    <span class="curso-text">Informática Básica</span>
+                                </button>
+                            </li>
+                        </ul>
                     </div>
-                </div>
-                
+                </div> 
                 <div id="turmas-list">
-                    <!-- Turmas carregadas via JavaScript -->
-                </div>
+                    </div>
             </div>
 
-            <!-- ABA HORÁRIOS -->
             <div id="horarios-tab" class="tab-content">
                 <div class="head-title">
                     <div class="left">
@@ -344,7 +347,6 @@
                     </div>
                 </div>
                 
-                <!-- Formulário para criar/editar cursos e turmas -->
                 <div class="management-container">
                     <div class="management-section">
                         <h3>Gerenciar Cursos</h3>
@@ -352,19 +354,19 @@
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label for="curso-nome">Nome do Curso</label>
-                                    <input type="text" id="curso-nome" required>
+                                    <input type="text" id="curso-nome" name="nome_do_curso" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="curso-duracao-horas">Mês de Inicio</label>
-                                    <input type="number" id="curso-inicio" required min="1">
+                                    <label for="curso-mes-inicio">Mês de Inicio</label>
+                                    <input type="text" id="curso-inicio" name="ano_inicio" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="curso-duracao-horas">Ano de Inicio</label>
-                                    <input type="number" id="curso-ano" required min="1">
+                                    <label for="curso-ano-inicio">Ano de Inicio</label>
+                                    <input type="number" id="curso-ano"  name="mes_inicio" required min="1">
                                 </div>
                                 <div class="form-group">
                                     <label for="curso-duracao-semanas">Duração (Meses)</label>
-                                    <input type="number" id="curso-duracao-semanas" required min="1">
+                                    <input type="number" id="curso-duracao-semanas" name="duracao" required min="1">
                                 </div>
                             </div>
                             <button type="submit" class="btn-primary">Criar Curso</button>
@@ -373,7 +375,10 @@
                         <div class="cursos-list">
                             <h4>Cursos Cadastrados</h4>
                             <div id="lista-cursos">
-                                <!-- Cursos carregados via JavaScript -->
+                                
+
+
+                                
                             </div>
                         </div>
                     </div>
@@ -384,20 +389,24 @@
                             <div class="form-grid">
                                  <div class="form-group">
                                     <label for="turma-curso">Curso *</label>
-                                    <select id="turma-curso" required>
+                                    <select id="turma-curso" required onchange="loadCiclosForTurma()">
                                         <option value="">Selecione um curso</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="turma-select">Turma *</label>
-                                    <select name="turma" id="turma-select" required>
-                                        <option value="">Selecione uma turma</option>
-        
-                                       <option value="turma_a_manha">Turma 1</option>
-                                       <option value="turma_b_tarde">Turma 2</option>
-                                       <option value="turma_c_noite">Turma 3</option>
-                                       <option value="turma_c_noite">Turma 4</option>
+                                    <label for="turma-ciclo">Ciclo *</label>
+                                    <select id="turma-ciclo" required>
+                                        <option value="">Selecione um ciclo</option>
+                                        <option value="new">Criar Novo Ciclo</option>
                                     </select>
+                                </div>
+                                <div class="form-group" id="novo-ciclo-group" style="display: none;">
+                                    <label for="novo-ciclo-nome">Nome do Novo Ciclo</label>
+                                    <input type="text" id="novo-ciclo-nome" placeholder="Ex: Ciclo 1, Ciclo de Inverno">
+                                </div>
+                                <div class="form-group">
+                                    <label for="turma-nome">Nome da Turma *</label>
+                                    <input type="text" id="turma-nome" required placeholder="Ex: Turma 1, Turma A">
                                 </div>
                                
                                 <div class="form-group">
@@ -427,7 +436,6 @@
                 </div>
             </div>
 
-            <!-- ABA GRADE DE HORÁRIOS -->
             <div id="grade-tab" class="tab-content">
                 <div class="head-title">
                     <div class="left">
@@ -448,28 +456,25 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Turma</th>
                                     <th>Curso</th>
+                                    <th>Ciclo</th>
+                                    <th>Turma</th>
                                     <th>Horário</th>
                                     <th>Dias da Semana</th>
-                                    <th>Período</th>
                                     <th>Alunos</th>
+                                    <th>Limite</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody id="grade-horarios">
-                                <!-- Dados carregados via JavaScript -->
-                            </tbody>
+                                </tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </main>
-        <!-- CONTEÚDO PRINCIPAL -->
-    </section>
-    <!-- CONTEÚDO -->
-
-    <script src="script.js"></script>
+        </section>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script src="dashboard.js"></script>
 </body>
 </html>
