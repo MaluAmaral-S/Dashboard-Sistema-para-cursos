@@ -6,9 +6,10 @@ DB_NAME = "Instituto.db"
 
 def init_db():
     """
-    Inicializa o banco de dados SQLite, criando as tabelas
-    'Cursos', 'Ciclos', 'Turmas' e 'Alunos' se elas não existirem.
-    Define as chaves primárias e estrangeiras para garantir a integridade dos dados.
+    Inicializa o banco de dados SQLite.
+    - Cursos: agora com 'icone' e 'icone_cor_classe'.
+    - Ciclos: agora com 'curso_id', 'ano_inicio', 'mes_inicio', 'duracao'.
+    - Turmas e Alunos mantêm suas estruturas.
     """
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
@@ -17,19 +18,23 @@ def init_db():
             CREATE TABLE IF NOT EXISTS Cursos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nome_do_curso TEXT NOT NULL,
-                ano_inicio INTEGER,
-                mes_inicio INTEGER,
-                duracao INTEGER
+                icone TEXT,
+                icone_cor_classe TEXT
             )
         ''')
         # Tabela Ciclos
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS Ciclos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome_ciclo TEXT NOT NULL UNIQUE
+                curso_id INTEGER NOT NULL,
+                nome_ciclo TEXT NOT NULL,
+                ano_inicio INTEGER,
+                mes_inicio INTEGER,
+                duracao INTEGER,
+                FOREIGN KEY (curso_id) REFERENCES Cursos(id) ON DELETE CASCADE
             )
         ''')
-        # Tabela Turmas (com chave estrangeira para Cursos e Ciclos)
+        # Tabela Turmas
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS Turmas (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,11 +46,11 @@ def init_db():
                 horario_inicio TEXT,
                 horario_fim TEXT,
                 dias_semana TEXT,
-                FOREIGN KEY (curso_id) REFERENCES Cursos(id),
-                FOREIGN KEY (ciclo_id) REFERENCES Ciclos(id)
+                FOREIGN KEY (curso_id) REFERENCES Cursos(id) ON DELETE CASCADE,
+                FOREIGN KEY (ciclo_id) REFERENCES Ciclos(id) ON DELETE CASCADE
             )
         ''')
-        # Tabela Alunos (com chaves estrangeiras para Cursos e Turmas)
+        # Tabela Alunos
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS Alunos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,8 +67,8 @@ def init_db():
                 curso_id INTEGER NOT NULL,
                 turma_id INTEGER NOT NULL,
                 data_inscricao TEXT DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (curso_id) REFERENCES Cursos(id),
-                FOREIGN KEY (turma_id) REFERENCES Turmas(id)
+                FOREIGN KEY (curso_id) REFERENCES Cursos(id) ON DELETE CASCADE,
+                FOREIGN KEY (turma_id) REFERENCES Turmas(id) ON DELETE CASCADE
             )
         ''')
         conn.commit()
@@ -78,25 +83,22 @@ def homepage():
 @app.route('/cursos', methods=['POST'])
 def criar_curso():
     """
-    Cria um novo curso no banco de dados.
-    Espera dados JSON no corpo da requisição.
+    Cria um novo curso com nome, ícone e classe de cor do ícone.
     """
     if request.method == 'POST':
-        data = request.json # Pega os dados JSON da requisição
+        data = request.json
         nome = data.get('nome_do_curso')
-        ano = data.get('ano_inicio')
-        mes = data.get('mes_inicio')
-        duracao = data.get('duracao')
+        icone = data.get('icone')
+        icone_cor_classe = data.get('icone_cor_classe')
 
-        # Validação básica dos campos obrigatórios
-        if not all([nome, ano, mes, duracao]):
-            return jsonify({"message": "Todos os campos do curso são obrigatórios!", "success": False}), 400
+        if not nome or not icone:
+            return jsonify({"message": "O nome do curso e o ícone são obrigatórios!", "success": False}), 400
 
         try:
             with sqlite3.connect(DB_NAME) as conexao:
                 cursor = conexao.cursor()
-                comando_sql = "INSERT INTO Cursos (nome_do_curso, ano_inicio, mes_inicio, duracao) VALUES (?, ?, ?, ?)"
-                cursor.execute(comando_sql, (nome, ano, mes, duracao))
+                comando_sql = "INSERT INTO Cursos (nome_do_curso, icone, icone_cor_classe) VALUES (?, ?, ?)"
+                cursor.execute(comando_sql, (nome, icone, icone_cor_classe))
                 conexao.commit()
                 return jsonify({"message": "Curso criado com sucesso!", "success": True}), 201
         except sqlite3.Error as e:
@@ -106,15 +108,14 @@ def criar_curso():
 @app.route('/api/cursos', methods=['GET'])
 def get_cursos():
     """
-    Retorna uma lista de todos os cursos cadastrados.
+    Retorna uma lista de todos os cursos (id, nome, icone, icone_cor_classe).
     """
     try:
         with sqlite3.connect(DB_NAME) as conexao:
             cursor = conexao.cursor()
-            cursor.execute("SELECT id, nome_do_curso, ano_inicio, mes_inicio, duracao FROM Cursos")
+            cursor.execute("SELECT id, nome_do_curso, icone, icone_cor_classe FROM Cursos")
             cursos = cursor.fetchall()
-            # Converte os resultados para um formato JSON amigável
-            return jsonify([{"id": c[0], "nome_do_curso": c[1], "ano_inicio": c[2], "mes_inicio": c[3], "duracao": c[4]} for c in cursos])
+            return jsonify([{"id": c[0], "nome_do_curso": c[1], "icone": c[2], "icone_cor_classe": c[3]} for c in cursos])
     except sqlite3.Error as e:
         print(f"Erro ao buscar cursos: {e}")
         return jsonify({"message": f"Erro ao buscar cursos: {e}", "success": False}), 500
@@ -127,9 +128,10 @@ def deletar_curso(curso_id):
     try:
         with sqlite3.connect(DB_NAME) as conexao:
             cursor = conexao.cursor()
+            cursor.execute("PRAGMA foreign_keys = ON")
             cursor.execute("DELETE FROM Cursos WHERE id = ?", (curso_id,))
             conexao.commit()
-            return jsonify({"message": "Curso excluído com sucesso!", "success": True}), 200
+            return jsonify({"message": "Curso e seus ciclos/turmas associados foram excluídos!", "success": True}), 200
     except sqlite3.Error as e:
         print(f"Erro ao deletar curso: {e}")
         return jsonify({"message": f"Erro ao deletar curso: {e}", "success": False}), 500
@@ -137,49 +139,93 @@ def deletar_curso(curso_id):
 @app.route('/api/ciclos', methods=['GET'])
 def get_ciclos():
     """
-    Retorna uma lista de todos os ciclos cadastrados.
+    Retorna uma lista de todos os ciclos com o nome do curso associado.
     """
     try:
         with sqlite3.connect(DB_NAME) as conexao:
             cursor = conexao.cursor()
-            cursor.execute("SELECT id, nome_ciclo FROM Ciclos ORDER BY id ASC")
+            cursor.execute("""
+                SELECT CI.id, CI.nome_ciclo, C.nome_do_curso, C.id as curso_id
+                FROM Ciclos CI
+                JOIN Cursos C ON CI.curso_id = C.id
+                ORDER BY C.nome_do_curso, CI.nome_ciclo
+            """)
             ciclos = cursor.fetchall()
-            return jsonify([{"id": c[0], "nome_ciclo": c[1]} for c in ciclos])
+            return jsonify([{"id": c[0], "nome_ciclo": c[1], "curso_nome": c[2], "curso_id": c[3]} for c in ciclos])
     except sqlite3.Error as e:
         print(f"Erro ao buscar ciclos: {e}")
         return jsonify({"message": f"Erro ao buscar ciclos: {e}", "success": False}), 500
 
-@app.route('/api/ciclos', methods=['POST'])
-def criar_ciclo():
+@app.route('/api/ciclos/<int:ciclo_id>', methods=['DELETE'])
+def deletar_ciclo(ciclo_id):
     """
-    Cria um novo ciclo no banco de dados.
-    Espera dados JSON com 'nome_ciclo'.
+    Deleta um ciclo específico pelo ID.
+    Graças ao 'ON DELETE CASCADE' no banco de dados, as turmas associadas também serão removidas.
     """
-    data = request.json
-    nome_ciclo = data.get('nome_ciclo')
-    if not nome_ciclo:
-        return jsonify({"message": "Nome do ciclo é obrigatório!", "success": False}), 400
+    try:
+        with sqlite3.connect(DB_NAME) as conexao:
+            cursor = conexao.cursor()
+            cursor.execute("PRAGMA foreign_keys = ON")
+            cursor.execute("DELETE FROM Ciclos WHERE id = ?", (ciclo_id,))
+            conexao.commit()
+            
+            if conexao.total_changes > 0:
+                return jsonify({"message": "Ciclo excluído com sucesso!", "success": True}), 200
+            else:
+                return jsonify({"message": "Ciclo não encontrado.", "success": False}), 404
+    except sqlite3.Error as e:
+        print(f"Erro ao deletar ciclo: {e}")
+        return jsonify({"message": f"Erro ao deletar ciclo: {e}", "success": False}), 500
+
+@app.route('/api/ciclos/por_curso', methods=['GET'])
+def get_ciclos_por_curso():
+    """
+    Retorna ciclos filtrados por ID de curso.
+    """
+    curso_id = request.args.get('curso_id')
+    if not curso_id:
+        return jsonify([])
 
     try:
         with sqlite3.connect(DB_NAME) as conexao:
             cursor = conexao.cursor()
-            cursor.execute("INSERT INTO Ciclos (nome_ciclo) VALUES (?)", (nome_ciclo,))
+            cursor.execute("SELECT id, nome_ciclo FROM Ciclos WHERE curso_id = ?", (curso_id,))
+            ciclos = cursor.fetchall()
+            return jsonify([{"id": c[0], "nome_ciclo": c[1]} for c in ciclos])
+    except sqlite3.Error as e:
+        print(f"Erro ao buscar ciclos por curso: {e}")
+        return jsonify({"message": f"Erro ao buscar ciclos por curso: {e}", "success": False}), 500
+
+@app.route('/api/ciclos', methods=['POST'])
+def criar_ciclo():
+    """
+    Cria um novo ciclo associado a um curso.
+    """
+    data = request.json
+    curso_id = data.get('curso_id')
+    nome_ciclo = data.get('nome_ciclo')
+    ano = data.get('ano_inicio')
+    mes = data.get('mes_inicio')
+    duracao = data.get('duracao')
+
+    if not all([curso_id, nome_ciclo, ano, mes, duracao]):
+        return jsonify({"message": "Todos os campos do ciclo são obrigatórios!", "success": False}), 400
+
+    try:
+        with sqlite3.connect(DB_NAME) as conexao:
+            cursor = conexao.cursor()
+            cursor.execute(
+                "INSERT INTO Ciclos (curso_id, nome_ciclo, ano_inicio, mes_inicio, duracao) VALUES (?, ?, ?, ?, ?)",
+                (curso_id, nome_ciclo, ano, mes, duracao)
+            )
             conexao.commit()
-            # Retorna o ID do ciclo recém-criado
-            return jsonify({"message": "Ciclo criado com sucesso!", "success": True, "id": cursor.lastrowid, "nome_ciclo": nome_ciclo}), 201
-    except sqlite3.IntegrityError:
-        # Erro de integridade ocorre se o nome do ciclo já existe (UNIQUE constraint)
-        return jsonify({"message": "Ciclo com este nome já existe.", "success": False}), 409
+            return jsonify({"message": "Ciclo criado com sucesso!", "success": True}), 201
     except sqlite3.Error as e:
         print(f"Erro ao criar ciclo: {e}")
         return jsonify({"message": f"Erro ao criar ciclo: {e}", "success": False}), 500
 
 @app.route('/api/turmas', methods=['POST'])
 def criar_turma():
-    """
-    Cria uma nova turma no banco de dados, associando-a a um curso e ciclo.
-    Espera dados JSON com todos os detalhes da turma.
-    """
     data = request.json
     curso_id = data.get('curso_id')
     ciclo_id = data.get('ciclo_id')
@@ -190,7 +236,6 @@ def criar_turma():
     horario_fim = data.get('horario_fim')
     dias_semana = data.get('dias_semana')
 
-    # Validação de todos os campos obrigatórios
     if not all([curso_id, ciclo_id, nome_turma, limite_alunos, data_inicio, horario_inicio, horario_fim, dias_semana]):
         return jsonify({"message": "Todos os campos da turma são obrigatórios!", "success": False}), 400
 
@@ -210,10 +255,6 @@ def criar_turma():
 
 @app.route('/api/turmas', methods=['GET'])
 def get_turmas():
-    """
-    Retorna uma lista de todas as turmas cadastradas, incluindo informações
-    do curso e ciclo associados, e a contagem de alunos inscritos.
-    """
     try:
         with sqlite3.connect(DB_NAME) as conexao:
             cursor = conexao.cursor()
@@ -237,16 +278,9 @@ def get_turmas():
             turmas_list = []
             for t in turmas:
                 turmas_list.append({
-                    "id": t[0],
-                    "curso_nome": t[1],
-                    "ciclo_nome": t[2],
-                    "nome_turma": t[3],
-                    "limite_alunos": t[4],
-                    "data_inicio": t[5],
-                    "horario_inicio": t[6],
-                    "horario_fim": t[7],
-                    "dias_semana": t[8],
-                    "alunos_inscritos": t[9]
+                    "id": t[0], "curso_nome": t[1], "ciclo_nome": t[2], "nome_turma": t[3],
+                    "limite_alunos": t[4], "data_inicio": t[5], "horario_inicio": t[6],
+                    "horario_fim": t[7], "dias_semana": t[8], "alunos_inscritos": t[9]
                 })
             return jsonify(turmas_list)
     except sqlite3.Error as e:
@@ -255,15 +289,10 @@ def get_turmas():
 
 @app.route('/api/turmas/por_curso_ciclo', methods=['GET'])
 def get_turmas_por_curso_e_ciclo():
-    """
-    Retorna turmas filtradas por ID de curso e ID de ciclo.
-    Usado para popular o dropdown de turmas na tela de inscrição de alunos.
-    """
     curso_id = request.args.get('curso_id')
     ciclo_id = request.args.get('ciclo_id')
-
     if not curso_id or not ciclo_id:
-        return jsonify({"message": "IDs de curso e ciclo são obrigatórios para buscar turmas.", "success": False}), 400
+        return jsonify([])
 
     try:
         with sqlite3.connect(DB_NAME) as conexao:
@@ -281,10 +310,6 @@ def get_turmas_por_curso_e_ciclo():
 
 @app.route('/api/alunos', methods=['POST'])
 def inscrever_aluno():
-    """
-    Inscreve um novo aluno no banco de dados.
-    Espera dados JSON com as informações do aluno e os IDs de curso/turma.
-    """
     data = request.json
     nome = data.get('nome')
     idade = data.get('idade')
@@ -299,7 +324,6 @@ def inscrever_aluno():
     curso_id = data.get('curso_id')
     turma_id = data.get('turma_id')
 
-    # Validação de campos obrigatórios do aluno
     if not all([nome, idade, data_nascimento, cpf, rg, telefone, endereco, nome_mae, curso_id, turma_id]):
         return jsonify({"message": "Campos obrigatórios do aluno não preenchidos!", "success": False}), 400
 
@@ -314,7 +338,6 @@ def inscrever_aluno():
             conexao.commit()
             return jsonify({"message": "Aluno inscrito com sucesso!", "success": True}), 201
     except sqlite3.IntegrityError:
-        # Erro se o CPF já estiver cadastrado
         return jsonify({"message": "CPF já cadastrado!", "success": False}), 409
     except sqlite3.Error as e:
         print(f"Erro ao inscrever aluno: {e}")
@@ -322,10 +345,6 @@ def inscrever_aluno():
 
 @app.route('/api/alunos', methods=['GET'])
 def get_alunos():
-    """
-    Retorna uma lista de todos os alunos cadastrados, incluindo informações
-    do curso e turma em que estão inscritos.
-    """
     try:
         with sqlite3.connect(DB_NAME) as conexao:
             cursor = conexao.cursor()
@@ -350,27 +369,19 @@ def get_alunos():
 
 @app.route('/api/dashboard_stats', methods=['GET'])
 def get_dashboard_stats():
-    """
-    Retorna estatísticas gerais para o dashboard, como total de alunos,
-    turmas, cursos, e listas de turmas e cursos populares.
-    """
     try:
         with sqlite3.connect(DB_NAME) as conexao:
             cursor = conexao.cursor()
             
-            # Total de Alunos
             cursor.execute("SELECT COUNT(*) FROM Alunos")
             total_alunos = cursor.fetchone()[0]
             
-            # Total de Turmas
             cursor.execute("SELECT COUNT(*) FROM Turmas")
             total_turmas = cursor.fetchone()[0]
             
-            # Total de Cursos
             cursor.execute("SELECT COUNT(*) FROM Cursos")
             total_cursos = cursor.fetchone()[0]
 
-            # Turmas Populares (com contagem de alunos e limite)
             cursor.execute("""
                 SELECT T.nome_turma, COUNT(A.id) AS num_alunos, T.limite_alunos
                 FROM Turmas T
@@ -381,7 +392,6 @@ def get_dashboard_stats():
             """)
             turmas_populares = cursor.fetchall()
 
-            # Cursos Populares (com total de alunos)
             cursor.execute("""
                 SELECT C.nome_do_curso, COUNT(A.id) AS num_alunos
                 FROM Cursos C
@@ -404,6 +414,5 @@ def get_dashboard_stats():
         return jsonify({"message": f"Erro ao buscar estatísticas do dashboard: {e}", "success": False}), 500
 
 if __name__ == '__main__':
-    # Garante que o banco de dados e as tabelas são criados ao iniciar o aplicativo
     init_db() 
     app.run(debug=True)
