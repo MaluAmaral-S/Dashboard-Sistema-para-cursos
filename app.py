@@ -367,6 +367,35 @@ def get_alunos():
         print(f"Erro ao buscar alunos: {e}")
         return jsonify({"message": f"Erro ao buscar alunos: {e}", "success": False}), 500
 
+@app.route('/api/alunos/por_turma', methods=['GET'])
+def get_alunos_por_turma():
+    """
+    Retorna alunos filtrados por ID de turma.
+    Seleciona apenas os campos necessários para a exibição na lista.
+    """
+    turma_id = request.args.get('turma_id')
+    if not turma_id:
+        return jsonify({"message": "O ID da turma é obrigatório!", "success": False}), 400
+
+    try:
+        with sqlite3.connect(DB_NAME) as conexao:
+            cursor = conexao.cursor()
+            # Seleciona apenas os dados que o usuário pediu para a lista
+            cursor.execute("""
+                SELECT nome, idade, cpf, telefone 
+                FROM Alunos 
+                WHERE turma_id = ?
+            """, (turma_id,))
+            alunos = cursor.fetchall()
+            
+            # Formata os resultados para JSON
+            alunos_list = [{"nome": a[0], "idade": a[1], "cpf": a[2], "telefone": a[3]} for a in alunos]
+            return jsonify(alunos_list)
+            
+    except sqlite3.Error as e:
+        print(f"Erro ao buscar alunos por turma: {e}")
+        return jsonify({"message": f"Erro ao buscar alunos por turma: {e}", "success": False}), 500
+
 @app.route('/api/dashboard_stats', methods=['GET'])
 def get_dashboard_stats():
     try:
