@@ -97,12 +97,10 @@ async function loadAllCursos() {
         const response = await fetch('/api/cursos');
         const cursos = await response.json();
         
-        // CORREÇÃO: Busca os contentores das duas abas
         const listaCursosHorarios = document.getElementById('lista-cursos-botoes');
         const listaCursosTurmas = document.getElementById('lista-cursos-turmas');
         const selectsDeCurso = document.querySelectorAll('#ciclo-curso-select, #curso_select, #filtro-curso');
         
-        // CORREÇÃO: Limpa ambas as listas
         if (listaCursosHorarios) listaCursosHorarios.innerHTML = '';
         if (listaCursosTurmas) listaCursosTurmas.innerHTML = '';
 
@@ -116,18 +114,24 @@ async function loadAllCursos() {
 
             // Adiciona na aba Horários (com botão de excluir)
             if (listaCursosHorarios) {
-                // CORREÇÃO: Usa <li> para corresponder ao CSS
                 const cursoItemHorarios = document.createElement('li');
                 cursoItemHorarios.classList.add('curso-btn-item');
                 cursoItemHorarios.innerHTML = cursoHTML + `<button class="btn-delete" data-id="${curso.id}" title="Excluir Curso">X</button>`;
                 listaCursosHorarios.appendChild(cursoItemHorarios);
             }
 
-            // CORREÇÃO: Adiciona na aba Turmas (apenas visualização)
+            // Adiciona na aba Turmas com evento para abrir o modal
             if (listaCursosTurmas) {
-                // CORREÇÃO: Usa <li> para corresponder ao CSS
                 const cursoItemTurmas = document.createElement('li');
-                cursoItemTurmas.innerHTML = cursoHTML;
+                cursoItemTurmas.innerHTML = cursoHTML.replace('<button class="', `<button data-id="${curso.id}" data-nome="${curso.nome_do_curso}" class="`);
+                
+                cursoItemTurmas.querySelector('.curso-btn').addEventListener('click', (event) => {
+                    const targetButton = event.currentTarget;
+                    const cursoId = targetButton.dataset.id;
+                    const cursoNome = targetButton.dataset.nome;
+                    abrirModalDetalhesTurma(cursoId, cursoNome);
+                });
+
                 listaCursosTurmas.appendChild(cursoItemTurmas);
             }
         });
@@ -562,4 +566,135 @@ document.addEventListener('DOMContentLoaded', () => {
     loadAllTurmas();
     loadAllAlunos();
     loadDashboardStats();
+});
+
+// --- LÓGICA DO MODAL DE DETALHES DE TURMA (ATUALIZADO) ---
+
+const modalDetalhes = document.getElementById('turma-details-modal');
+const modalCloseBtn = document.getElementById('modal-details-close-btn');
+
+const ciclosContainer = document.getElementById('modal-ciclos-container');
+const turmasContainer = document.getElementById('modal-turmas-container');
+const alunosContainer = document.getElementById('modal-alunos-container');
+
+// Função principal para abrir e iniciar o modal
+function abrirModalDetalhesTurma(cursoId, cursoNome) {
+    document.getElementById('modal-curso-nome').textContent = `Detalhes de: ${cursoNome}`;
+    
+    ciclosContainer.style.display = 'block';
+    turmasContainer.style.display = 'none';
+    alunosContainer.style.display = 'none';
+
+    document.getElementById('modal-lista-ciclos').innerHTML = '';
+    document.getElementById('modal-lista-turmas').innerHTML = '';
+    document.getElementById('modal-lista-alunos').innerHTML = '';
+
+    modalDetalhes.classList.remove('hidden');
+    carregarCiclosNoModal(cursoId);
+}
+
+// Carrega os ciclos do curso selecionado
+async function carregarCiclosNoModal(cursoId) {
+    const listaCiclos = document.getElementById('modal-lista-ciclos');
+    listaCiclos.innerHTML = '<p>Carregando ciclos...</p>';
+    document.querySelector('#modal-ciclos-container h4').innerHTML = "<i class='bx bx-layer'></i> 1. Selecione o Ciclo";
+
+    try {
+        const response = await fetch(`/api/ciclos/por_curso?curso_id=${cursoId}`);
+        const ciclos = await response.json();
+        listaCiclos.innerHTML = '';
+
+        if (ciclos.length === 0) {
+            listaCiclos.innerHTML = '<p>Nenhum ciclo cadastrado para este curso.</p>';
+            return;
+        }
+
+        ciclos.forEach(ciclo => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-modal-select';
+            // ATUALIZAÇÃO: Adiciona ícone ao botão
+            btn.innerHTML = `<i class='bx bxs-arrow-to-right'></i> ${ciclo.nome_ciclo}`;
+            btn.onclick = () => carregarTurmasNoModal(cursoId, ciclo.id);
+            listaCiclos.appendChild(btn);
+        });
+    } catch (error) {
+        console.error('Erro ao buscar ciclos para o modal:', error);
+        listaCiclos.innerHTML = '<p>Erro ao carregar os ciclos.</p>';
+    }
+}
+
+// Carrega as turmas do ciclo selecionado
+async function carregarTurmasNoModal(cursoId, cicloId) {
+    ciclosContainer.style.display = 'none';
+    turmasContainer.style.display = 'block';
+    
+    const listaTurmas = document.getElementById('modal-lista-turmas');
+    listaTurmas.innerHTML = '<p>Carregando turmas...</p>';
+    document.querySelector('#modal-turmas-container h4').innerHTML = "<i class='bx bx-chalkboard'></i> 2. Selecione a Turma";
+    
+    try {
+        const response = await fetch(`/api/turmas/por_curso_ciclo?curso_id=${cursoId}&ciclo_id=${cicloId}`);
+        const turmas = await response.json();
+        listaTurmas.innerHTML = '';
+
+        if (turmas.length === 0) {
+            listaTurmas.innerHTML = '<p>Nenhuma turma cadastrada para este ciclo.</p>';
+            return;
+        }
+        
+        turmas.forEach(turma => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-modal-select';
+             // ATUALIZAÇÃO: Adiciona ícone ao botão
+            btn.innerHTML = `<i class='bx bxs-arrow-to-right'></i> ${turma.nome_turma}`;
+            btn.onclick = () => carregarAlunosNoModal(turma.id);
+            listaTurmas.appendChild(btn);
+        });
+    } catch (error) {
+        console.error('Erro ao buscar turmas para o modal:', error);
+        listaTurmas.innerHTML = '<p>Erro ao carregar as turmas.</p>';
+    }
+}
+
+// Carrega os alunos da turma selecionada
+async function carregarAlunosNoModal(turmaId) {
+    turmasContainer.style.display = 'none';
+    alunosContainer.style.display = 'block';
+    
+    const listaAlunos = document.getElementById('modal-lista-alunos');
+    listaAlunos.innerHTML = '<tr><td colspan="4">Carregando alunos...</td></tr>';
+    document.querySelector('#modal-alunos-container h4').innerHTML = "<i class='bx bxs-group'></i> 3. Alunos Inscritos";
+
+    try {
+        const response = await fetch(`/api/alunos/por_turma?turma_id=${turmaId}`);
+        const alunos = await response.json();
+        listaAlunos.innerHTML = '';
+
+        if (alunos.length === 0) {
+            listaAlunos.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Nenhum aluno inscrito nesta turma.</td></tr>';
+            return;
+        }
+
+        alunos.forEach(aluno => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${aluno.nome}</td>
+                <td>${aluno.idade}</td>
+                <td>${aluno.cpf}</td>
+                <td>${aluno.telefone}</td>
+            `;
+            listaAlunos.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Erro ao buscar alunos para o modal:', error);
+        listaAlunos.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Erro ao carregar a lista de alunos.</td></tr>';
+    }
+}
+
+// Eventos para fechar o modal
+modalCloseBtn.addEventListener('click', () => modalDetalhes.classList.add('hidden'));
+modalDetalhes.addEventListener('click', (e) => {
+    if (e.target === modalDetalhes) {
+        modalDetalhes.classList.add('hidden');
+    }
 });

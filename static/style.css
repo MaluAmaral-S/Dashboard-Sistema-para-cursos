@@ -43,6 +43,7 @@ body.dark {
     --light: #1F2937;
     --grey: #111827;
     --dark: #f8f5f5;
+    --light-blue: #1E3A8A; /* Azul mais escuro para hover no modo escuro */
 }
 
 body {
@@ -620,11 +621,12 @@ body {
     flex: 1 1 100%;
 }
 
-/* --- ESTILOS PARA ABAS TURMAS E HORÁRIOS (UNIFICADO E CORRIGIDO) --- */
-
+/* --- ESTILOS PARA O GRID DE CURSOS (ATUALIZADO) --- */
 .box-cursos {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    /* Cria um grid responsivo com colunas de no mínimo 260px e no máximo 1fr */
+    /* Em telas largas, isso criará múltiplas colunas (3, 4, etc.) */
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 24px;
     margin-top: 36px;
     padding: 0;
@@ -796,7 +798,6 @@ body.dark .curso-btn .curso-text {
 }
 
 /* --- ESTILOS PARA O MODAL DE ÍCONES --- */
-
 .icon-selector-container {
     display: flex;
     align-items: center;
@@ -837,13 +838,15 @@ body.dark .curso-btn .curso-text {
 }
 .modal-content {
     background: var(--light);
-    padding: 24px;
     border-radius: 20px;
     width: 90%;
-    max-width: 500px;
+    /* --- ATUALIZAÇÃO: Modal mais largo --- */
+    max-width: 750px; 
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     transform: scale(1);
     transition: transform 0.3s ease;
+    /* --- ATUALIZAÇÃO: Mais espaçamento interno --- */
+    padding: 32px;
 }
 .modal-backdrop.hidden .modal-content {
     transform: scale(0.9);
@@ -859,6 +862,7 @@ body.dark .curso-btn .curso-text {
 .modal-header h3 {
     margin: 0;
     color: var(--dark);
+    font-size: 22px;
 }
 .modal-close {
     background: none;
@@ -919,6 +923,78 @@ body.dark .curso-btn .curso-text {
 .message.error { background: #FEE2E2; color: #991B1B; border: 1px solid #EF4444; }
 .message.warning { background: #FEF3C7; color: #92400E; border: 1px solid #FBBF24; }
 
+/* --- ESTILOS PARA O MODAL DE DETALHES DA TURMA (ATUALIZADO) --- */
+.modal-body-steps h4 {
+    color: var(--dark);
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--grey);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.modal-body-steps h4 i {
+    color: var(--blue);
+}
+
+.lista-botoes-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.lista-botoes-modal .btn-modal-select {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 16px;
+    text-align: left;
+    background-color: var(--grey);
+    color: var(--dark);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: 500;
+}
+.lista-botoes-modal .btn-modal-select i {
+    font-size: 22px;
+    transition: color .2s ease;
+    color: var(--dark-grey);
+}
+
+.lista-botoes-modal .btn-modal-select:hover {
+    background-color: var(--blue);
+    color: var(--light);
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.lista-botoes-modal .btn-modal-select:hover i {
+    color: var(--light);
+}
+
+#modal-alunos-container .table-data {
+    margin-top: 0;
+}
+/* Efeito Zebra e Hover para a tabela de alunos no modal */
+#modal-alunos-container table tbody tr:nth-child(even) {
+    background-color: var(--grey);
+}
+#modal-alunos-container table tbody tr:hover {
+    background-color: var(--light-blue);
+    color: var(--dark);
+}
+#modal-alunos-container table td {
+    padding: 12px 6px;
+}
+
 @media screen and (max-width: 768px) {
     #sidebar {
         width: 200px;
@@ -951,37 +1027,8 @@ body.dark .curso-btn .curso-text {
     #content main .table-data .order table {
         min-width: 420px;
     }
+    /* --- ATUALIZAÇÃO: Grid de cursos vira coluna única em mobile --- */
+    .box-cursos {
+        grid-template-columns: 1fr;
+    }
 }
-
-/* --- Adaptação dos Botões de Curso para o Tema Escuro --- */
-
-body.dark .curso-btn.styled-btn {
-    /*
-     * No modo escuro, a variável --light é redefinida para #1F2937 (um cinza escuro).
-     * Usamos ela para o fundo do botão, mantendo a consistência com outros 'cards' do painel.
-    */
-    background: var(--light);
-
-    /*
-     * A variável --grey no modo escuro é #111827. Usamos um cinza um pouco mais claro 
-     * para a borda, para que ela se destaque sutilmente do fundo.
-     * Pode ser ajustado se preferir mais ou menos contraste.
-    */
-    border-color: #374151; /* Um cinza médio-escuro */
-
-    /* Sombras não são eficazes em fundos escuros, por isso as removemos. */
-    box-shadow: none;
-}
-
-body.dark .curso-btn .curso-text {
-    /*
-     * No modo escuro, a variável --dark é redefinida para #f8f5f5 (um branco/cinza claro).
-     * Usamos ela para garantir que o texto seja legível.
-    */
-    color: var(--dark);
-}
-
-/* * NOTA: As cores dos ícones (os fundos coloridos em azul, amarelo e laranja)
- * são mantidas intencionalmente no modo escuro para servirem como pontos de
- * destaque e manter a identidade visual de cada categoria de curso.
-*/
