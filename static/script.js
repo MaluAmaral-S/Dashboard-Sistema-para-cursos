@@ -53,17 +53,29 @@ class ThemeManager {
     }
 }
 
-// Lista de ícones pré-definidos com foco em tecnologia e usando as 3 classes de cores
+// Lógica de Cores e Ícones
+const ICON_COLOR_CLASSES = [
+    { name: 'Azul', class: 'ai-icon' },
+    { name: 'Amarelo', class: 'prog-icon' },
+    { name: 'Laranja', class: 'info-icon' },
+    { name: 'Verde', class: 'success-icon' },
+    { name: 'Roxo', class: 'creative-icon' },
+    { name: 'Vermelho', class: 'danger-icon' }
+];
+
 const ICONS_PREDEFINIDOS = [
-    { name: 'Programação', class: 'bx bx-code-alt', colorClass: 'prog-icon' }, // Amarelo
-    { name: 'Base de Dados', class: 'bx bxs-data', colorClass: 'info-icon' }, // Laranja
-    { name: 'Redes', class: 'bx bx-git-branch', colorClass: 'ai-icon' }, // Azul
-    { name: 'Inteligência Artificial', class: 'bx bxs-brain', colorClass: 'prog-icon' }, // Amarelo
-    { name: 'Design Gráfico', class: 'bx bxs-paint', colorClass: 'info-icon' }, // Laranja
-    { name: 'Robótica', class: 'bx bxs-bot', colorClass: 'ai-icon' }, // Azul
-    { name: 'Edição de Vídeo', class: 'bx bxs-video-recording', colorClass: 'prog-icon' }, // Amarelo
-    { name: 'Segurança', class: 'bx bxs-shield-x', colorClass: 'info-icon' }, // Laranja
-    { name: 'Hardware', class: 'bx bxs-chip', colorClass: 'ai-icon' }, // Azul
+    { name: 'Programação', class: 'bx bx-code-alt' },
+    { name: 'Base de Dados', class: 'bx bxs-data' },
+    { name: 'Redes', class: 'bx bx-git-branch' },
+    { name: 'Inteligência Artificial', class: 'bx bxs-brain' },
+    { name: 'Design Gráfico', class: 'bx bxs-paint' },
+    { name: 'Robótica', class: 'bx bxs-bot' },
+    { name: 'Edição de Vídeo', class: 'bx bxs-video-recording' },
+    { name: 'Segurança', class: 'bx bxs-shield-x' },
+    { name: 'Hardware', class: 'bx bxs-chip' },
+    { name: 'Marketing Digital', class: 'bx bx-trending-up' },
+    { name: 'Fotografia', class: 'bx bxs-camera' },
+    { name: 'Escrita Criativa', class: 'bx bxs-pencil' }
 ];
 
 
@@ -112,7 +124,6 @@ async function loadAllCursos() {
                 </button>
             `;
 
-            // Adiciona na aba Horários (com botão de excluir)
             if (listaCursosHorarios) {
                 const cursoItemHorarios = document.createElement('li');
                 cursoItemHorarios.classList.add('curso-btn-item');
@@ -120,7 +131,6 @@ async function loadAllCursos() {
                 listaCursosHorarios.appendChild(cursoItemHorarios);
             }
 
-            // Adiciona na aba Turmas com evento para abrir o modal
             if (listaCursosTurmas) {
                 const cursoItemTurmas = document.createElement('li');
                 cursoItemTurmas.innerHTML = cursoHTML.replace('<button class="', `<button data-id="${curso.id}" data-nome="${curso.nome_do_curso}" class="`);
@@ -136,7 +146,6 @@ async function loadAllCursos() {
             }
         });
 
-        // Adiciona evento de exclusão APENAS para a lista da aba Horários
         if (listaCursosHorarios) {
             listaCursosHorarios.querySelectorAll('.btn-delete').forEach(button => {
                 button.addEventListener('click', async (event) => {
@@ -149,7 +158,6 @@ async function loadAllCursos() {
             });
         }
         
-        // Popula os menus dropdown
         selectsDeCurso.forEach(select => {
             if (select) {
                 const currentVal = select.value;
@@ -175,8 +183,8 @@ async function handleCursoFormSubmit(event) {
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
 
-    if (!data.icone) {
-        displayMessage('Por favor, selecione um ícone para o curso.', 'error');
+    if (!data.icone || !data.icone_cor_classe) {
+        displayMessage('Por favor, selecione um ícone e uma cor para o curso.', 'error');
         return;
     }
 
@@ -191,6 +199,7 @@ async function handleCursoFormSubmit(event) {
             displayMessage(result.message, 'success');
             form.reset();
             document.getElementById('icone-preview').innerHTML = `<i class='bx bx-question-mark'></i>`;
+            document.getElementById('icone-preview').className = 'icon-preview'; // Reset class
             loadAllCursos();
         } else {
             displayMessage(result.message, 'error');
@@ -229,19 +238,24 @@ function setupIconModal() {
     const preview = document.getElementById('icone-preview');
 
     iconGrid.innerHTML = '';
-    ICONS_PREDEFINIDOS.forEach(icon => {
+    ICONS_PREDEFINIDOS.forEach((icon, index) => {
+        // Usa o primeiro item da lista de cores como padrão
+        const defaultColor = ICON_COLOR_CLASSES[0].class; 
+
         const item = document.createElement('div');
         item.classList.add('icone-item');
         item.dataset.iconClass = icon.class;
-        item.dataset.colorClass = icon.colorClass;
+        
         item.innerHTML = `
             <i class='${icon.class}'></i>
             <span>${icon.name}</span>
         `;
         item.addEventListener('click', () => {
             hiddenInputIcon.value = icon.class;
-            hiddenInputColor.value = icon.colorClass;
+            hiddenInputColor.value = defaultColor; // Define uma cor padrão
             preview.innerHTML = `<i class='${icon.class}'></i>`;
+            preview.className = 'icon-preview curso-icon'; // Limpa classes antigas
+            preview.classList.add(defaultColor); // Adiciona a nova cor
             modal.classList.add('hidden');
         });
         iconGrid.appendChild(item);
@@ -250,11 +264,61 @@ function setupIconModal() {
     openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
     closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
     modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.classList.add('hidden');
-        }
+        if (e.target === modal) modal.classList.add('hidden');
     });
 }
+
+// --- INÍCIO: NOVA LÓGICA PARA O MODAL DE CORES ---
+function setupColorModal() {
+    const colorModal = document.getElementById('color-modal');
+    if (!colorModal) return;
+
+    const openBtn = document.getElementById('icone-preview');
+    const closeBtn = document.getElementById('color-modal-close-btn');
+    const colorGrid = document.getElementById('color-grid');
+    const hiddenInputIcon = document.getElementById('curso-icone');
+    const hiddenInputColor = document.getElementById('curso-icone-cor');
+
+    const populateColorGrid = () => {
+        const currentIcon = hiddenInputIcon.value;
+        colorGrid.innerHTML = ''; // Limpa o grid
+
+        ICON_COLOR_CLASSES.forEach(color => {
+            const item = document.createElement('div');
+            item.classList.add('icone-item');
+            item.dataset.colorClass = color.class;
+
+            item.innerHTML = `
+                <i class='${currentIcon} ${color.class}'></i>
+                <span>${color.name}</span>
+            `;
+
+            item.addEventListener('click', () => {
+                hiddenInputColor.value = color.class;
+                openBtn.className = 'icon-preview curso-icon'; // Limpa classes antigas
+                openBtn.classList.add(color.class); // Adiciona a nova cor
+                colorModal.classList.add('hidden');
+            });
+            colorGrid.appendChild(item);
+        });
+    };
+
+    openBtn.addEventListener('click', () => {
+        if (!hiddenInputIcon.value) {
+            displayMessage('Por favor, selecione um ícone primeiro.', 'warning');
+            return;
+        }
+        populateColorGrid();
+        colorModal.classList.remove('hidden');
+    });
+
+    closeBtn.addEventListener('click', () => colorModal.classList.add('hidden'));
+    colorModal.addEventListener('click', (e) => {
+        if (e.target === colorModal) colorModal.classList.add('hidden');
+    });
+}
+// --- FIM: NOVA LÓGICA PARA O MODAL DE CORES ---
+
 
 // --- LÓGICA DE CICLOS ---
 async function loadAllCiclos() {
@@ -561,6 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('inscricao-form')?.addEventListener('submit', handleInscricaoFormSubmit);
     
     setupIconModal();
+    setupColorModal(); // Chama a nova função de setup
     loadAllCursos();
     loadAllCiclos();
     loadAllTurmas();
@@ -568,7 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDashboardStats();
 });
 
-// --- LÓGICA DO MODAL DE DETALHES DE TURMA (ATUALIZADO) ---
+// --- LÓGICA DO MODAL DE DETALHES DE TURMA ---
 
 const modalDetalhes = document.getElementById('turma-details-modal');
 const modalCloseBtn = document.getElementById('modal-details-close-btn');
@@ -577,7 +642,6 @@ const ciclosContainer = document.getElementById('modal-ciclos-container');
 const turmasContainer = document.getElementById('modal-turmas-container');
 const alunosContainer = document.getElementById('modal-alunos-container');
 
-// Função principal para abrir e iniciar o modal
 function abrirModalDetalhesTurma(cursoId, cursoNome) {
     document.getElementById('modal-curso-nome').textContent = `Detalhes de: ${cursoNome}`;
     
@@ -593,7 +657,6 @@ function abrirModalDetalhesTurma(cursoId, cursoNome) {
     carregarCiclosNoModal(cursoId);
 }
 
-// Carrega os ciclos do curso selecionado
 async function carregarCiclosNoModal(cursoId) {
     const listaCiclos = document.getElementById('modal-lista-ciclos');
     listaCiclos.innerHTML = '<p>Carregando ciclos...</p>';
@@ -612,7 +675,6 @@ async function carregarCiclosNoModal(cursoId) {
         ciclos.forEach(ciclo => {
             const btn = document.createElement('button');
             btn.className = 'btn-modal-select';
-            // ATUALIZAÇÃO: Adiciona ícone ao botão
             btn.innerHTML = `<i class='bx bxs-arrow-to-right'></i> ${ciclo.nome_ciclo}`;
             btn.onclick = () => carregarTurmasNoModal(cursoId, ciclo.id);
             listaCiclos.appendChild(btn);
@@ -623,7 +685,6 @@ async function carregarCiclosNoModal(cursoId) {
     }
 }
 
-// Carrega as turmas do ciclo selecionado
 async function carregarTurmasNoModal(cursoId, cicloId) {
     ciclosContainer.style.display = 'none';
     turmasContainer.style.display = 'block';
@@ -645,7 +706,6 @@ async function carregarTurmasNoModal(cursoId, cicloId) {
         turmas.forEach(turma => {
             const btn = document.createElement('button');
             btn.className = 'btn-modal-select';
-             // ATUALIZAÇÃO: Adiciona ícone ao botão
             btn.innerHTML = `<i class='bx bxs-arrow-to-right'></i> ${turma.nome_turma}`;
             btn.onclick = () => carregarAlunosNoModal(turma.id);
             listaTurmas.appendChild(btn);
@@ -656,7 +716,6 @@ async function carregarTurmasNoModal(cursoId, cicloId) {
     }
 }
 
-// Carrega os alunos da turma selecionada
 async function carregarAlunosNoModal(turmaId) {
     turmasContainer.style.display = 'none';
     alunosContainer.style.display = 'block';
