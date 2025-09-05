@@ -1,205 +1,759 @@
 class MenuLateral {
     constructor() {
-        // Seleciona todos os itens do menu lateral
         this.itensMenu = document.querySelectorAll('#sidebar .side-menu.top li a');
-        // Seleciona o ícone do menu na barra de navegação
         this.botaoMenu = document.querySelector('#content nav .bx.bx-menu');
-        // Seleciona a barra lateral
         this.barraLateral = document.getElementById('sidebar');
         this.inicializar();
     }
-
-    // Inicializa os eventos do menu lateral
     inicializar() {
-        // Adiciona evento de clique para cada item do menu
         this.itensMenu.forEach(item => {
             item.addEventListener('click', () => this.ativarItemMenu(item));
         });
-
-        // Adiciona evento de clique para alternar a visibilidade da barra lateral
-        this.botaoMenu.addEventListener('click', () => this.alternarBarraLateral());
-
-        // Colapsa a barra lateral em telas pequenas (< 768px) ao carregar
+        if (this.botaoMenu) {
+            this.botaoMenu.addEventListener('click', () => this.alternarBarraLateral());
+        }
         if (window.innerWidth < 768) {
             this.barraLateral.classList.add('hide');
         }
     }
-
-    // Ativa o item de menu clicado e desativa os outros
     ativarItemMenu(item) {
         this.itensMenu.forEach(i => {
             i.parentElement.classList.remove('active');
         });
         item.parentElement.classList.add('active');
     }
-
-    // Alterna a visibilidade da barra lateral
     alternarBarraLateral() {
         this.barraLateral.classList.toggle('hide');
     }
 }
 
-// Classe para gerenciar o menu lateral e o tema
-class SidebarManager {
+class ThemeManager {
     constructor() {
-        this.sidebar = document.getElementById('sidebar');
-        this.menuBtn = document.querySelector('#content nav .bx.bx-menu');
         this.switchMode = document.getElementById('switch-mode');
-        this.themeIcon = document.querySelector('.theme-icon');
-        
-        this.initEventListeners();
-        this.loadThemePreference();
+        this.init();
     }
-    
-    initEventListeners() {
-        // Toggle sidebar
-        if (this.menuBtn) {
-            this.menuBtn.addEventListener('click', () => {
-                this.sidebar.classList.toggle('hide');
-                document.getElementById('content').classList.toggle('sidebar-open');
-            });
-        }
-        
-        // Toggle theme
-        if (this.switchMode) {
-            this.switchMode.addEventListener('change', () => {
-                this.toggleTheme();
-            });
-        }
-        
-        // Responsive sidebar
-        window.addEventListener('resize', () => {
-            if (window.innerWidth <= 768) {
-                this.sidebar.classList.add('hide');
-                document.getElementById('content').classList.remove('sidebar-open');
-            } else {
-                this.sidebar.classList.remove('hide');
-            }
-        });
-    }
-    
-    toggleTheme() {
-        document.body.classList.toggle('dark');
-        
-        // Update theme icon
-        if (document.body.classList.contains('dark')) {
-            this.themeIcon.classList.replace('bx-sun', 'bx-moon');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            this.themeIcon.classList.replace('bx-moon', 'bx-sun');
-            localStorage.setItem('theme', 'light');
-        }
-    }
-    
-    loadThemePreference() {
-        // Check if theme preference exists in localStorage
+    init() {
         const savedTheme = localStorage.getItem('theme');
-        
         if (savedTheme === 'dark') {
             document.body.classList.add('dark');
-            this.themeIcon.classList.replace('bx-sun', 'bx-moon');
             if (this.switchMode) this.switchMode.checked = true;
-        } else {
-            document.body.classList.remove('dark');
-            this.themeIcon.classList.replace('bx-moon', 'bx-sun');
-            if (this.switchMode) this.switchMode.checked = false;
+        }
+
+        if (this.switchMode) {
+            this.switchMode.addEventListener('change', () => {
+                if (this.switchMode.checked) {
+                    document.body.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
         }
     }
 }
 
-// Script para garantir a persistência do tema entre páginas
-document.addEventListener('DOMContentLoaded', function() {
-    // Verificar se existe preferência de tema salva
-    const savedTheme = localStorage.getItem('theme');
-    const switchMode = document.getElementById('switch-mode');
-    const themeIcon = document.querySelector('.theme-icon');
+// Lógica de Cores e Ícones
+const ICON_COLOR_CLASSES = [
+    { name: 'Azul', class: 'ai-icon' },
+    { name: 'Amarelo', class: 'prog-icon' },
+    { name: 'Laranja', class: 'info-icon' },
+    { name: 'Verde', class: 'success-icon' },
+    { name: 'Roxo', class: 'creative-icon' },
+    { name: 'Vermelho', class: 'danger-icon' }
+];
+
+const ICONS_PREDEFINIDOS = [
+    { name: 'Programação', class: 'bx bx-code-alt' },
+    { name: 'Base de Dados', class: 'bx bxs-data' },
+    { name: 'Redes', class: 'bx bx-git-branch' },
+    { name: 'Inteligência Artificial', class: 'bx bxs-brain' },
+    { name: 'Design Gráfico', class: 'bx bxs-paint' },
+    { name: 'Robótica', class: 'bx bxs-bot' },
+    { name: 'Edição de Vídeo', class: 'bx bxs-video-recording' },
+    { name: 'Segurança', class: 'bx bxs-shield-x' },
+    { name: 'Hardware', class: 'bx bxs-chip' },
+    { name: 'Marketing Digital', class: 'bx bx-trending-up' },
+    { name: 'Fotografia', class: 'bx bxs-camera' },
+    { name: 'Escrita Criativa', class: 'bx bxs-pencil' }
+];
+
+
+function showTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.querySelectorAll('#sidebar .side-menu.top li').forEach(item => item.classList.remove('active'));
     
-    // Aplicar tema salvo
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark');
-        if (themeIcon) themeIcon.classList.replace('bx-sun', 'bx-moon');
-        if (switchMode) switchMode.checked = true;
-    } else {
-        document.body.classList.remove('dark');
-        if (themeIcon) themeIcon.classList.replace('bx-moon', 'bx-sun');
-        if (switchMode) switchMode.checked = false;
+    const selectedTab = document.getElementById(tabId + '-tab');
+    if (selectedTab) selectedTab.classList.add('active');
+    
+    const selectedMenuItem = document.querySelector(`#sidebar .side-menu.top li[data-tab="${tabId}"]`);
+    if (selectedMenuItem) selectedMenuItem.classList.add('active');
+}
+
+function displayMessage(message, type) {
+    const mainContent = document.querySelector('#content main');
+    let messageDiv = document.querySelector('.message');
+    if (!messageDiv) {
+        messageDiv = document.createElement('div');
+        mainContent.prepend(messageDiv);
     }
-    
-    // Adicionar event listener para alternar tema
-    if (switchMode) {
-        switchMode.addEventListener('change', function() {
-            if (this.checked) {
-                document.body.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-                if (themeIcon) themeIcon.classList.replace('bx-sun', 'bx-moon');
-            } else {
-                document.body.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-                if (themeIcon) themeIcon.classList.replace('bx-moon', 'bx-sun');
+    messageDiv.className = 'message ' + type;
+    messageDiv.textContent = message;
+    messageDiv.style.display = 'block';
+    setTimeout(() => { messageDiv.style.display = 'none'; }, 5000);
+}
+
+// --- LÓGICA DE CURSOS ---
+async function loadAllCursos() {
+    try {
+        const response = await fetch('/api/cursos');
+        const cursos = await response.json();
+        
+        const listaCursosHorarios = document.getElementById('lista-cursos-botoes');
+        const listaCursosTurmas = document.getElementById('lista-cursos-turmas');
+        const selectsDeCurso = document.querySelectorAll('#ciclo-curso-select, #curso_select, #filtro-curso');
+        
+        if (listaCursosHorarios) listaCursosHorarios.innerHTML = '';
+        if (listaCursosTurmas) listaCursosTurmas.innerHTML = '';
+
+        cursos.forEach(curso => {
+            const cursoHTML = `
+                <button class="curso-btn styled-btn">
+                    <span class="curso-icon ${curso.icone_cor_classe || ''}"><i class='${curso.icone || 'bx bx-question-mark'}'></i></span>
+                    <span class="curso-text">${curso.nome_do_curso}</span>
+                </button>
+            `;
+
+            if (listaCursosHorarios) {
+                const cursoItemHorarios = document.createElement('li');
+                cursoItemHorarios.classList.add('curso-btn-item');
+                cursoItemHorarios.innerHTML = cursoHTML + `<button class="btn-delete" data-id="${curso.id}" title="Excluir Curso">X</button>`;
+                listaCursosHorarios.appendChild(cursoItemHorarios);
+            }
+
+            if (listaCursosTurmas) {
+                const cursoItemTurmas = document.createElement('li');
+                cursoItemTurmas.innerHTML = cursoHTML.replace('<button class="', `<button data-id="${curso.id}" data-nome="${curso.nome_do_curso}" class="`);
+                
+                cursoItemTurmas.querySelector('.curso-btn').addEventListener('click', (event) => {
+                    const targetButton = event.currentTarget;
+                    const cursoId = targetButton.dataset.id;
+                    const cursoNome = targetButton.dataset.nome;
+                    abrirModalDetalhesTurma(cursoId, cursoNome);
+                });
+
+                listaCursosTurmas.appendChild(cursoItemTurmas);
             }
         });
-    }
-});
 
-// Função para mostrar a aba correta e atualizar o menu
-function showTab(tabId) {
-    // 1. Esconde todos os conteúdos de abas
-    const allTabContents = document.querySelectorAll('.tab-content');
-    allTabContents.forEach(content => {
-        content.classList.remove('active');
-    });
+        if (listaCursosHorarios) {
+            listaCursosHorarios.querySelectorAll('.btn-delete').forEach(button => {
+                button.addEventListener('click', async (event) => {
+                    event.stopPropagation();
+                    const cursoId = event.target.dataset.id;
+                    if (confirm('Tem certeza que deseja excluir este curso? Todos os ciclos, turmas e inscrições associados serão perdidos!')) {
+                        await deleteCurso(cursoId);
+                    }
+                });
+            });
+        }
+        
+        selectsDeCurso.forEach(select => {
+            if (select) {
+                const currentVal = select.value;
+                select.innerHTML = `<option value="">Selecione um curso</option>`;
+                cursos.forEach(curso => {
+                    const option = document.createElement('option');
+                    option.value = curso.id;
+                    option.textContent = curso.nome_do_curso;
+                    select.appendChild(option);
+                });
+                select.value = currentVal;
+            }
+        });
 
-    // 2. Remove a classe 'active' de todos os itens do menu
-    const allMenuItems = document.querySelectorAll('#sidebar .side-menu.top li');
-    allMenuItems.forEach(item => {
-        item.classList.remove('active');
-    });
-
-    // 3. Mostra o conteúdo da aba selecionada
-    const selectedTabContent = document.getElementById(tabId + '-tab');
-    if (selectedTabContent) {
-        selectedTabContent.classList.add('active');
-    }
-
-    // 4. Adiciona a classe 'active' ao item de menu clicado
-    // Usa o atributo 'data-tab' que você já tem no HTML
-    const selectedMenuItem = document.querySelector(`#sidebar .side-menu.top li[data-tab="${tabId}"]`);
-    if (selectedMenuItem) {
-        selectedMenuItem.classList.add('active');
+    } catch (error) {
+        console.error('Erro ao carregar cursos:', error);
     }
 }
 
-// Event Listeners para os cliques no menu
-document.addEventListener('DOMContentLoaded', () => {
-    const menuItems = document.querySelectorAll('#sidebar .side-menu.top li');
+async function handleCursoFormSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
 
-    menuItems.forEach(item => {
-        item.addEventListener('click', (event) => {
-            // Previne o comportamento padrão do link, se houver
-            event.preventDefault(); 
-            
+    if (!data.icone || !data.icone_cor_classe) {
+        displayMessage('Por favor, selecione um ícone e uma cor para o curso.', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/cursos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.success) {
+            displayMessage(result.message, 'success');
+            form.reset();
+            document.getElementById('icone-preview').innerHTML = `<i class='bx bx-question-mark'></i>`;
+            document.getElementById('icone-preview').className = 'icon-preview'; // Reset class
+            loadAllCursos();
+        } else {
+            displayMessage(result.message, 'error');
+        }
+    } catch (error) {
+        displayMessage('Erro de conexão ao criar curso.', 'error');
+    }
+}
+
+async function deleteCurso(cursoId) {
+    try {
+        const response = await fetch(`/api/cursos/${cursoId}`, { method: 'DELETE' });
+        const result = await response.json();
+        if (result.success) {
+            displayMessage(result.message, 'success');
+            loadAllCursos();
+            loadAllCiclos();
+            loadAllTurmas();
+        } else {
+            displayMessage(result.message, 'error');
+        }
+    } catch (error) {
+        displayMessage('Erro de conexão ao deletar curso.', 'error');
+    }
+}
+
+function setupIconModal() {
+    const modal = document.getElementById('icone-modal');
+    if (!modal) return;
+
+    const openBtn = document.getElementById('btn-selecionar-icone');
+    const closeBtn = document.getElementById('modal-close-btn');
+    const iconGrid = document.getElementById('icone-grid');
+    const hiddenInputIcon = document.getElementById('curso-icone');
+    const hiddenInputColor = document.getElementById('curso-icone-cor');
+    const preview = document.getElementById('icone-preview');
+
+    iconGrid.innerHTML = '';
+    ICONS_PREDEFINIDOS.forEach((icon, index) => {
+        // Usa o primeiro item da lista de cores como padrão
+        const defaultColor = ICON_COLOR_CLASSES[0].class; 
+
+        const item = document.createElement('div');
+        item.classList.add('icone-item');
+        item.dataset.iconClass = icon.class;
+        
+        item.innerHTML = `
+            <i class='${icon.class}'></i>
+            <span>${icon.name}</span>
+        `;
+        item.addEventListener('click', () => {
+            hiddenInputIcon.value = icon.class;
+            hiddenInputColor.value = defaultColor; // Define uma cor padrão
+            preview.innerHTML = `<i class='${icon.class}'></i>`;
+            preview.className = 'icon-preview curso-icon'; // Limpa classes antigas
+            preview.classList.add(defaultColor); // Adiciona a nova cor
+            modal.classList.add('hidden');
+        });
+        iconGrid.appendChild(item);
+    });
+
+    openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+    });
+}
+
+// --- INÍCIO: NOVA LÓGICA PARA O MODAL DE CORES ---
+function setupColorModal() {
+    const colorModal = document.getElementById('color-modal');
+    if (!colorModal) return;
+
+    const openBtn = document.getElementById('icone-preview');
+    const closeBtn = document.getElementById('color-modal-close-btn');
+    const colorGrid = document.getElementById('color-grid');
+    const hiddenInputIcon = document.getElementById('curso-icone');
+    const hiddenInputColor = document.getElementById('curso-icone-cor');
+
+    const populateColorGrid = () => {
+        const currentIcon = hiddenInputIcon.value;
+        colorGrid.innerHTML = ''; // Limpa o grid
+
+        ICON_COLOR_CLASSES.forEach(color => {
+            const item = document.createElement('div');
+            item.classList.add('icone-item');
+            item.dataset.colorClass = color.class;
+
+            item.innerHTML = `
+                <i class='${currentIcon} ${color.class}'></i>
+                <span>${color.name}</span>
+            `;
+
+            item.addEventListener('click', () => {
+                hiddenInputColor.value = color.class;
+                openBtn.className = 'icon-preview curso-icon'; // Limpa classes antigas
+                openBtn.classList.add(color.class); // Adiciona a nova cor
+                colorModal.classList.add('hidden');
+            });
+            colorGrid.appendChild(item);
+        });
+    };
+
+    openBtn.addEventListener('click', () => {
+        if (!hiddenInputIcon.value) {
+            displayMessage('Por favor, selecione um ícone primeiro.', 'warning');
+            return;
+        }
+        populateColorGrid();
+        colorModal.classList.remove('hidden');
+    });
+
+    closeBtn.addEventListener('click', () => colorModal.classList.add('hidden'));
+    colorModal.addEventListener('click', (e) => {
+        if (e.target === colorModal) colorModal.classList.add('hidden');
+    });
+}
+// --- FIM: NOVA LÓGICA PARA O MODAL DE CORES ---
+
+
+// --- LÓGICA DE CICLOS ---
+async function loadAllCiclos() {
+    try {
+        const response = await fetch('/api/ciclos');
+        const ciclos = await response.json();
+        
+        const listaCiclosDiv = document.getElementById('lista-ciclos');
+        const turmaCicloSelect = document.getElementById('turma-ciclo-select');
+
+        if (listaCiclosDiv) {
+            listaCiclosDiv.innerHTML = '';
+            ciclos.forEach(ciclo => {
+                const cicloItem = document.createElement('div');
+                cicloItem.classList.add('ciclo-item');
+                cicloItem.innerHTML = `
+                    <div class="item-info">
+                        <h5>${ciclo.nome_ciclo}</h5>
+                        <p>Curso: ${ciclo.curso_nome}</p>
+                    </div>
+                    <button class="btn-delete" data-id="${ciclo.id}" title="Excluir Ciclo">Excluir</button>
+                `;
+                listaCiclosDiv.appendChild(cicloItem);
+            });
+
+            listaCiclosDiv.querySelectorAll('.btn-delete').forEach(button => {
+                button.addEventListener('click', async (event) => {
+                    const cicloId = event.target.dataset.id;
+                    if (confirm('Tem certeza que deseja excluir este ciclo? As turmas associadas também serão removidas.')) {
+                        await deleteCiclo(cicloId);
+                    }
+                });
+            });
+        }
+        
+        if (turmaCicloSelect) {
+            const currentVal = turmaCicloSelect.value;
+            turmaCicloSelect.innerHTML = `<option value="">Selecione um ciclo</option>`;
+            ciclos.forEach(ciclo => {
+                const option = document.createElement('option');
+                option.value = ciclo.id;
+                option.textContent = `${ciclo.nome_ciclo} (${ciclo.curso_nome})`;
+                option.dataset.cursoId = ciclo.curso_id;
+                turmaCicloSelect.appendChild(option);
+            });
+            turmaCicloSelect.value = currentVal;
+        }
+
+    } catch (error) {
+        console.error('Erro ao carregar ciclos:', error);
+    }
+}
+
+async function deleteCiclo(cicloId) {
+    try {
+        const response = await fetch(`/api/ciclos/${cicloId}`, { method: 'DELETE' });
+        const result = await response.json();
+        if (result.success) {
+            displayMessage(result.message, 'success');
+            loadAllCiclos();
+            loadAllTurmas();
+        } else {
+            displayMessage(result.message, 'error');
+        }
+    } catch (error) {
+        displayMessage('Erro de conexão ao deletar ciclo.', 'error');
+    }
+}
+
+async function handleCicloFormSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    if (!data.curso_id) {
+        displayMessage('Por favor, selecione um curso para criar o ciclo.', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/ciclos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.success) {
+            displayMessage(result.message, 'success');
+            form.reset();
+            loadAllCiclos();
+        } else {
+            displayMessage(result.message, 'error');
+        }
+    } catch (error) {
+        displayMessage('Erro de conexão ao criar ciclo.', 'error');
+    }
+}
+
+// --- LÓGICA DE TURMAS ---
+async function handleTurmaFormSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    const cicloSelect = document.getElementById('turma-ciclo-select');
+    const selectedOption = cicloSelect.options[cicloSelect.selectedIndex];
+    if (selectedOption && selectedOption.dataset.cursoId) {
+        data.curso_id = selectedOption.dataset.cursoId;
+    } else if (!data.ciclo_id) {
+         displayMessage('Por favor, selecione um ciclo.', 'error');
+         return;
+    } else {
+        displayMessage('Ciclo inválido. Não foi possível encontrar o curso associado.', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/turmas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.success) {
+            displayMessage(result.message, 'success');
+            form.reset();
+            loadAllTurmas();
+            loadDashboardStats();
+        } else {
+            displayMessage(result.message, 'error');
+        }
+    } catch (error) {
+        displayMessage('Erro de conexão ao criar turma.', 'error');
+    }
+}
+
+async function loadAllTurmas() {
+    try {
+        const response = await fetch('/api/turmas');
+        const turmas = await response.json();
+        const gradeHorariosBody = document.getElementById('grade-horarios');
+        
+        if (gradeHorariosBody) {
+            gradeHorariosBody.innerHTML = '';
+            turmas.forEach(turma => {
+                const row = document.createElement('tr');
+                const status = turma.alunos_inscritos >= turma.limite_alunos ? 'Cheia' : 'Disponível';
+                const statusClass = turma.alunos_inscritos >= turma.limite_alunos ? 'completed' : 'process';
+                row.innerHTML = `
+                    <td>${turma.curso_nome}</td>
+                    <td>${turma.ciclo_nome}</td>
+                    <td>${turma.nome_turma}</td>
+                    <td>${turma.horario_inicio} - ${turma.horario_fim}</td>
+                    <td>${turma.dias_semana}</td>
+                    <td>${turma.alunos_inscritos}</td>
+                    <td>${turma.limite_alunos}</td>
+                    <td><span class="status ${statusClass}">${status}</span></td>
+                `;
+                gradeHorariosBody.appendChild(row);
+            });
+        }
+    } catch (error) { console.error('Erro ao carregar turmas:', error); }
+}
+
+// --- LÓGICA DE INSCRIÇÃO DE ALUNOS ---
+async function loadCiclosForEnrollment() {
+    const cursoId = document.getElementById('curso_select').value;
+    const cicloSelect = document.getElementById('ciclo_select_enrollment');
+    const turmaSelect = document.getElementById('turma_select_enrollment');
+
+    cicloSelect.innerHTML = '<option value="">Selecione um ciclo</option>';
+    turmaSelect.innerHTML = '<option value="">Selecione uma turma</option>';
+    if (!cursoId) return;
+
+    try {
+        const response = await fetch(`/api/ciclos/por_curso?curso_id=${cursoId}`);
+        const ciclos = await response.json();
+        ciclos.forEach(ciclo => {
+            const option = document.createElement('option');
+            option.value = ciclo.id;
+            option.textContent = ciclo.nome_ciclo;
+            cicloSelect.appendChild(option);
+        });
+    } catch (error) { console.error('Erro ao carregar ciclos para inscrição:', error); }
+}
+
+async function loadTurmasForEnrollment() {
+    const cursoId = document.getElementById('curso_select').value;
+    const cicloId = document.getElementById('ciclo_select_enrollment').value;
+    const turmaSelect = document.getElementById('turma_select_enrollment');
+
+    turmaSelect.innerHTML = '<option value="">Selecione uma turma</option>';
+    if (!cursoId || !cicloId) return;
+
+    try {
+        const response = await fetch(`/api/turmas/por_curso_ciclo?curso_id=${cursoId}&ciclo_id=${cicloId}`);
+        const turmas = await response.json();
+        turmas.forEach(turma => {
+            const vagas = turma.limite_alunos;
+            const option = document.createElement('option');
+            option.value = turma.id;
+            option.textContent = `${turma.nome_turma} (Vagas: ${vagas})`;
+            turmaSelect.appendChild(option);
+        });
+    } catch (error) { console.error('Erro ao carregar turmas para inscrição:', error); }
+}
+
+async function handleInscricaoFormSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/alunos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.success) {
+            displayMessage(result.message, 'success');
+            form.reset();
+            loadAllAlunos();
+            loadDashboardStats();
+            loadAllTurmas();
+        } else {
+            displayMessage(result.message, 'error');
+        }
+    } catch (error) { displayMessage('Erro de conexão ao inscrever aluno.', 'error'); }
+}
+
+async function loadAllAlunos() {
+    try {
+        const response = await fetch('/api/alunos');
+        const alunos = await response.json();
+        const listaAlunosBody = document.getElementById('lista-alunos');
+        if (listaAlunosBody) {
+            listaAlunosBody.innerHTML = '';
+            alunos.forEach(aluno => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${aluno.nome}</td><td>${aluno.cpf}</td><td>${aluno.telefone}</td>
+                    <td>${aluno.curso}</td><td>${aluno.turma}</td><td>${new Date(aluno.data_inscricao).toLocaleDateString()}</td>
+                    <td><button class="btn-edit">E</button><button class="btn-delete">X</button></td>`;
+                listaAlunosBody.appendChild(row);
+            });
+        }
+    } catch (error) { console.error('Erro ao carregar alunos:', error); }
+}
+
+async function loadDashboardStats() {
+    try {
+        const response = await fetch('/api/dashboard_stats');
+        const stats = await response.json();
+        document.getElementById('total-alunos').textContent = stats.total_alunos;
+        document.getElementById('total-turmas').textContent = stats.total_turmas;
+        document.getElementById('total-cursos').textContent = stats.total_cursos;
+        
+        const turmasPopularesBody = document.getElementById('turmas-populares');
+        if (turmasPopularesBody) {
+            turmasPopularesBody.innerHTML = '';
+            stats.turmas_populares.forEach(t => {
+                turmasPopularesBody.innerHTML += `<tr><td>${t.nome}</td><td>${t.alunos}</td><td><span class="status process">${t.limite}</span></td></tr>`;
+            });
+        }
+        const cursosPopularesBody = document.getElementById('cursos-populares');
+        if (cursosPopularesBody) {
+            cursosPopularesBody.innerHTML = '';
+            stats.cursos_populares.forEach(c => {
+                cursosPopularesBody.innerHTML += `<tr><td>${c.nome}</td><td>${c.total_alunos}</td></tr>`;
+            });
+        }
+    } catch (error) { console.error('Erro ao carregar estatísticas:', error); }
+}
+
+function filtrarAlunos() {
+    displayMessage('Funcionalidade de filtro ainda não implementada.', 'warning');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    new MenuLateral();
+    new ThemeManager();
+
+    document.querySelectorAll('#sidebar .side-menu.top li').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
             const tabId = item.getAttribute('data-tab');
             if (tabId) {
-                // Remove o link para "pages/inscrição.html" e apenas troca a aba
-                // Isso unifica o comportamento de todos os botões do menu
-                window.history.pushState(null, '', '#' + tabId); // Opcional: muda a URL para refletir a aba
+                window.history.pushState({tabId}, '', `#${tabId}`);
                 showTab(tabId);
             }
         });
     });
 
-    // Opcional: Mostrar a aba correta se a página for carregada com um hash na URL
-    const initialTab = window.location.hash.substring(1);
-    if (initialTab) {
-        showTab(initialTab);
-    } else {
-        // Garante que a primeira aba ('painel') esteja ativa ao carregar
-        showTab('painel');
-    }
+    const initialTab = window.location.hash.substring(1) || 'painel';
+    showTab(initialTab);
+    
+    document.getElementById('curso-form')?.addEventListener('submit', handleCursoFormSubmit);
+    document.getElementById('ciclo-form')?.addEventListener('submit', handleCicloFormSubmit);
+    document.getElementById('turma-form')?.addEventListener('submit', handleTurmaFormSubmit);
+    document.getElementById('inscricao-form')?.addEventListener('submit', handleInscricaoFormSubmit);
+    
+    setupIconModal();
+    setupColorModal(); // Chama a nova função de setup
+    loadAllCursos();
+    loadAllCiclos();
+    loadAllTurmas();
+    loadAllAlunos();
+    loadDashboardStats();
 });
 
+// --- LÓGICA DO MODAL DE DETALHES DE TURMA ---
 
-// Instancia as classes para ativar as funcionalidades
-const menuLateral = new MenuLateral();
-const alternadorTema = new AlternadorTema();
-const gerenciadorSimulados = new GerenciadorSimulados();
+const modalDetalhes = document.getElementById('turma-details-modal');
+const modalCloseBtn = document.getElementById('modal-details-close-btn');
+
+const ciclosContainer = document.getElementById('modal-ciclos-container');
+const turmasContainer = document.getElementById('modal-turmas-container');
+const alunosContainer = document.getElementById('modal-alunos-container');
+
+function abrirModalDetalhesTurma(cursoId, cursoNome) {
+    document.getElementById('modal-curso-nome').textContent = `Detalhes de: ${cursoNome}`;
+    
+    ciclosContainer.style.display = 'block';
+    turmasContainer.style.display = 'none';
+    alunosContainer.style.display = 'none';
+
+    document.getElementById('modal-lista-ciclos').innerHTML = '';
+    document.getElementById('modal-lista-turmas').innerHTML = '';
+    document.getElementById('modal-lista-alunos').innerHTML = '';
+
+    modalDetalhes.classList.remove('hidden');
+    carregarCiclosNoModal(cursoId);
+}
+
+async function carregarCiclosNoModal(cursoId) {
+    const listaCiclos = document.getElementById('modal-lista-ciclos');
+    listaCiclos.innerHTML = '<p>Carregando ciclos...</p>';
+    document.querySelector('#modal-ciclos-container h4').innerHTML = "<i class='bx bx-layer'></i> 1. Selecione o Ciclo";
+
+    try {
+        const response = await fetch(`/api/ciclos/por_curso?curso_id=${cursoId}`);
+        const ciclos = await response.json();
+        listaCiclos.innerHTML = '';
+
+        if (ciclos.length === 0) {
+            listaCiclos.innerHTML = '<p>Nenhum ciclo cadastrado para este curso.</p>';
+            return;
+        }
+
+        ciclos.forEach(ciclo => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-modal-select';
+            btn.innerHTML = `<i class='bx bxs-arrow-to-right'></i> ${ciclo.nome_ciclo}`;
+            btn.onclick = () => carregarTurmasNoModal(cursoId, ciclo.id);
+            listaCiclos.appendChild(btn);
+        });
+    } catch (error) {
+        console.error('Erro ao buscar ciclos para o modal:', error);
+        listaCiclos.innerHTML = '<p>Erro ao carregar os ciclos.</p>';
+    }
+}
+
+async function carregarTurmasNoModal(cursoId, cicloId) {
+    ciclosContainer.style.display = 'none';
+    turmasContainer.style.display = 'block';
+    
+    const listaTurmas = document.getElementById('modal-lista-turmas');
+    listaTurmas.innerHTML = '<p>Carregando turmas...</p>';
+    document.querySelector('#modal-turmas-container h4').innerHTML = "<i class='bx bx-chalkboard'></i> 2. Selecione a Turma";
+    
+    try {
+        const response = await fetch(`/api/turmas/por_curso_ciclo?curso_id=${cursoId}&ciclo_id=${cicloId}`);
+        const turmas = await response.json();
+        listaTurmas.innerHTML = '';
+
+        if (turmas.length === 0) {
+            listaTurmas.innerHTML = '<p>Nenhuma turma cadastrada para este ciclo.</p>';
+            return;
+        }
+        
+        turmas.forEach(turma => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-modal-select';
+            btn.innerHTML = `<i class='bx bxs-arrow-to-right'></i> ${turma.nome_turma}`;
+            btn.onclick = () => carregarAlunosNoModal(turma.id);
+            listaTurmas.appendChild(btn);
+        });
+    } catch (error) {
+        console.error('Erro ao buscar turmas para o modal:', error);
+        listaTurmas.innerHTML = '<p>Erro ao carregar as turmas.</p>';
+    }
+}
+
+async function carregarAlunosNoModal(turmaId) {
+    turmasContainer.style.display = 'none';
+    alunosContainer.style.display = 'block';
+    
+    const listaAlunos = document.getElementById('modal-lista-alunos');
+    listaAlunos.innerHTML = '<tr><td colspan="4">Carregando alunos...</td></tr>';
+    document.querySelector('#modal-alunos-container h4').innerHTML = "<i class='bx bxs-group'></i> 3. Alunos Inscritos";
+
+    try {
+        const response = await fetch(`/api/alunos/por_turma?turma_id=${turmaId}`);
+        const alunos = await response.json();
+        listaAlunos.innerHTML = '';
+
+        if (alunos.length === 0) {
+            listaAlunos.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Nenhum aluno inscrito nesta turma.</td></tr>';
+            return;
+        }
+
+        alunos.forEach(aluno => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${aluno.nome}</td>
+                <td>${aluno.idade}</td>
+                <td>${aluno.cpf}</td>
+                <td>${aluno.telefone}</td>
+            `;
+            listaAlunos.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Erro ao buscar alunos para o modal:', error);
+        listaAlunos.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Erro ao carregar a lista de alunos.</td></tr>';
+    }
+}
+
+// Eventos para fechar o modal
+modalCloseBtn.addEventListener('click', () => modalDetalhes.classList.add('hidden'));
+modalDetalhes.addEventListener('click', (e) => {
+    if (e.target === modalDetalhes) {
+        modalDetalhes.classList.add('hidden');
+    }
+});
